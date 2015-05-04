@@ -18,7 +18,7 @@ object Try7 {
     def insert(id: Int, p:Person) : Future[Unit]
   }
 
-  // AST - abstract syntax tree. A representation of a monadic/applicative 
+  // Free monad/AST - abstract syntax tree. A representation of a monadic/applicative
   // workflow that calls the underlying API. An AST can be executed or 
   // serialized for execution later or remotely. Because ASTs have a beginning
   // and end, they serve as an implicit "session". Session semantics could be
@@ -41,7 +41,7 @@ object Try7 {
     }
   */
   /* A is the ultimate return type of the AST */
-  sealed trait ApiAst[ApiCall[_],+A] {
+  sealed trait ApiAst[ApiCall[_],+A] { // free monad that represents an AST that calls some API
     // Map and FlatMap are simply captured as case classes that lazily represent
     // the operation. They will be evaluated when the ast is executed
     def map[B](f: A => B): ApiAst[ApiCall,B] =
@@ -217,10 +217,11 @@ object Try7_Console_Pasteable {
   val stub = PersonDbStub
   // Make an ast to create an entry
   val insertAst = stub.insert(1, Person("lance",37))
-  // PersonService gives me an AST that is specific to PersonDb
+  // PersonService gives me an AST that is specific to PersonDb API
   val incAst = PersonService.incrementAge(1)
   // Note: nothing has actually happened yet
   val db = new PersonDbImpl
+  // Bind an instance of PersonDb to create an interpreter that can execute the ASTs
   val interpreter = stub.bind(db)
   val result : Future[Option[Int]] = for {
     _ <- interpreter(insertAst)
